@@ -16,6 +16,9 @@ export default class App extends Component {
     this.initialState = {
       displayValue: "0",
       operator: null,
+      displayOperator: null,
+      oldValue: null,
+      oldOperator: null,
     };
     this.state = this.initialState;
   }
@@ -43,12 +46,14 @@ export default class App extends Component {
   }
 
   handleInput = (input) => {
-    const { displayValue } = this.state;
+    const { displayValue, operator, oldValue, oldOperator } = this.state;
 
     switch (input) {
       case "CLEAR":
         this.setState({
           displayValue: "0",
+          displayOperator: null,
+          operator: null,
         });
         break;
       case "DEL":
@@ -68,10 +73,31 @@ export default class App extends Component {
       case "7":
       case "8":
       case "9":
-        if (displayValue.length === 18) break;
+        if (operator !== null){
+          this.setState({
+            oldOperator: operator,
+            oldValue: displayValue,
+            displayOperator: null,
+            displayValue: input,
+            operator: null,
+          })
+          break
+        }
+        if (displayValue.length === 26) break;
         this.setState({
           displayValue: displayValue === "0" ? input : displayValue + input,
         });
+        break;
+      case ".":
+        var check = true;
+        for(let i=0; i<=displayValue.length; i++){
+          if(displayValue.toString().substring(i,1) === ".") check = false;
+        }
+        if (check ===  true){
+          this.setState({
+            displayValue: displayValue + ".",
+          })
+        }
         break;
       case "+":
       case "-":
@@ -79,8 +105,33 @@ export default class App extends Component {
       case "÷":
         this.setState({
           operator: input,
+          displayOperator: input,
         });
-        break;
+      case "=":
+        if (oldOperator === null) break;
+        const x = parseFloat(oldValue);
+        const y = parseFloat(displayValue);
+        var v = 0;
+        switch (oldOperator) {
+          case "+":
+            v = x + y;
+            break;
+          case "-":
+            v = x - y;
+            break;
+          case "x":
+            v = x * y;
+            break;
+          case "÷":
+            v = x / y;
+            break;
+        }
+        this.setState({
+          displayValue: v,
+          oldOperator: null,
+          oldValue: null,
+        })
+        break
     }
   };
 
@@ -89,7 +140,7 @@ export default class App extends Component {
       <View style={styles.container}>
         <View style={styles.resultContainer}>
           <Text style={styles.resultText}>{this.state.displayValue}</Text>
-          <Text style={styles.operatorText}>{this.state.operator}</Text>
+          <Text style={styles.operatorText}>{this.state.displayOperator}</Text>
         </View>
 
         <View style={styles.inputContainer}>{this.renderButtons()}</View>
@@ -105,11 +156,11 @@ const styles = StyleSheet.create({
   resultContainer: {
     flex: 2,
     justifyContent: "center",
-    backgroundColor: "#1E1240",
+    backgroundColor: "#1C1C1C",
   },
   inputContainer: {
     flex: 4,
-    backgroundColor: "#3D0075",
+    backgroundColor: "#151515",
   },
   operatorText: {
     color: "white",
